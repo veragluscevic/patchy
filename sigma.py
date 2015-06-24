@@ -90,6 +90,7 @@ def sigmas(Lmin=2,Lmax=2000,NLs=40,outfile='sigmas_test.txt'):
     for i,L in enumerate(Ls):
         print 'for L={}'.format(L)
         s[1,i] = sigma_L(L)
+        print s[1,i]
 
     np.savetxt(outfile,s)
     return s
