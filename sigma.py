@@ -6,9 +6,18 @@ from math import factorial as fact
 
 #from sympy import N
 #from sympy.physics.wigner import wigner_3j
+import pywigxjpf as wig
+
+
+lmax = 2000
+wig.wig_table_init(2*lmax,9)
+wig.wig_temp_init(2*lmax)
+
+# Free memory space
+#wig.wig_temp_free()
+#wig.wig_table_free()
 
 Tcmb = 2.7255 * 1e6 # CMB temperature in uK
-lmax = 2000
 spectra = np.loadtxt('scalCls.dat')
 ls = spectra[:lmax-1,0]
 tt = spectra[:lmax-1,1] * (2.*np.pi) / ls / (ls + 1) #/ Tcmb
@@ -47,7 +56,8 @@ def w3j_factor(L, l, lp):
     """This computes the wigner-3j symbol for m's all zeros
     """
     #w3j = N(wigner_3j(L, l, lp, 0, 0, 0))
-    w3j = w3j_000(L, l, lp)
+    #w3j = w3j_000(L, l, lp)
+    w3j = val3j = wig.wig3jj([2*L, 2*l, 2*lp, 0, 0, 0])
     res = w3j**2 * (2.*l + 1.) * (2.*lp + 1.) / (4.*np.pi)
 
     return res
@@ -90,6 +100,7 @@ def sigmas(Lmin=2,Lmax=2000,NLs=40,outfile='sigmas_test.txt'):
     for i,L in enumerate(Ls):
         print 'for L={}'.format(L)
         s[1,i] = sigma_L(L)
+        print s[1,i]
 
     np.savetxt(outfile,s)
     return s
