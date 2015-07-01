@@ -33,6 +33,8 @@ Noise = 4.*np.pi*fsky * NET**2 / (tobs * 365*24*3600.)
 tt_tilde = tt #* Window**2
 tt_map = tt_tilde + Noise / Window**2
 
+def stirling(num):
+    return num*np.log(num) - num
 
 def w3j_000(L, l, lp):
 
@@ -47,6 +49,9 @@ def w3j_000(L, l, lp):
         #print 'abs(l - lp) > L'
         return 0.
 
+    #lnfact1 = stirling(J-2.*L) + stirling(J-2.*l) + stirling(J-2.*lp) - stirling(J+1.)
+    #lnfact2 = stirling(J/2.) - stirling(J/2.-L) - stirling(J/2.-l) - stirling(J/2.-lp)
+    #res = (-1.)**(J/2.) * np.exp(0.5*lnfact1 + lnfact2)
     fact1 = fact(J-2*L) * fact(J-2*l) * fact(J-2*lp) / fact(J+1)
     fact2 = fact(J/2) / (fact(J/2-L) * fact(J/2-l) * fact(J/2-lp))
     res = (-1)**(J/2) * fact1**0.5 * fact2
@@ -62,7 +67,7 @@ def w3j_factor(L, l, lp):
 
     return res
 
-def powerTT_factor(L, l, lp):
+def powerTT_factor(L, l, lp, fullsky=True):
     """This computes the power-spectrum factor in
     the variance of C_L^\tau\tau, for TT estimator
     """
@@ -71,7 +76,10 @@ def powerTT_factor(L, l, lp):
     num = (tt_tilde[l_ind] + tt_tilde[lp_ind])**2.
     denom = tt_map[l_ind] * tt_map[lp_ind]
     if l==lp:
-        denom += (-1)**L*tt_map[l_ind]
+        if fullsky:
+            denom += (-1)**L*tt_map[l_ind]
+    #    else:
+    #        denom *= 2.
 
     res = num / denom
     return res
@@ -89,7 +97,9 @@ def sigma_L(L):
 
     return res
 
-def sigmas(Lmin=2,Lmax=2000,NLs=40,outfile='sigmas_test.txt'):
+def sigmas(Lmin=2,Lmax=2000,NLs=40,
+           outfile='sigmas_test.txt',
+           flatsky=False):
     """This calls sigma_L for an array of L's
     """
     Lstep = int((Lmax - Lmin) / float(NLs))
@@ -99,9 +109,30 @@ def sigmas(Lmin=2,Lmax=2000,NLs=40,outfile='sigmas_test.txt'):
     s[0] = Ls
     for i,L in enumerate(Ls):
         print 'for L={}'.format(L)
-        s[1,i] = sigma_L(L)
+        if flatsky:
+            s[1,i] = sigma_L_flatsky(L)
+        else:
+            s[1,i] = sigma_L(L)
         print s[1,i]
 
     np.savetxt(outfile,s)
     return s
         
+def sigma_L_flatsky(L):
+    """This computes the variance of the tau estimator from TT for a single L
+    """
+
+    sum = 0.
+    for l in ls:
+        for lp in ls:
+            if L > l+lp or L < np.abs(l-lp):
+                sum += 0.
+            else:
+                summand = (2.*np.pi)**2 * powerTT_factor(L, l, lp, fullsky=False)
+                #summand = 1./(2.*np.pi)**2 * l*lp* powerTT_factor(L, l, lp, fullsky=False)
+                if l==lp:
+                    summand *= 2.
+                sum += summand
+    res = 1./sum
+
+    return res
