@@ -78,8 +78,6 @@ def powerTT_factor(L, l, lp, fullsky=True):
     if l==lp:
         if fullsky:
             denom += (-1)**L*tt_map[l_ind]
-    #    else:
-    #        denom *= 2.
 
     res = num / denom
     return res
