@@ -4,6 +4,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import factorial as fact
 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
+import matplotlib as mpl
+import matplotlib.patheffects as PathEffects
+import matplotlib.gridspec as gridspec
+import glob
+from matplotlib import rc
+rc('font',**{'family':'serif','serif':['Times','Palatino']})
+rc('text', usetex=True)
+mpl.rcParams['xtick.major.size']=8
+mpl.rcParams['ytick.major.size']=8
+mpl.rcParams['xtick.labelsize']=18
+mpl.rcParams['ytick.labelsize']=18
+
+
 #from sympy import N
 #from sympy.physics.wigner import wigner_3j
 import pywigxjpf as wig
@@ -22,7 +36,7 @@ spectra = np.loadtxt('scalCls.dat')
 ls = spectra[:lmax-1,0]
 tt = spectra[:lmax-1,1] * (2.*np.pi) / ls / (ls + 1) #/ Tcmb
 NET = 30 # Planck noise in uK(sec)**0.5
-tobs = 2 # observation time in years
+tobs = 2.5 # observation time in years
 fsky = 0.75
 
 fwhm = 5. #Planck resolution in arcmin
@@ -100,7 +114,7 @@ def sigma_L(L):
     return res
 
 def sigmas(Lmin=2,Lmax=2000,NLs=40,
-           outfile='sigmas_test.txt',
+           outfile='sigmas_NET30_2.5yr.txt',
            flatsky=False):
     """This calls sigma_L for an array of L's
     """
@@ -123,7 +137,7 @@ def sigmas(Lmin=2,Lmax=2000,NLs=40,
     np.savetxt(outfile,s)
     return s
         
-def sigma_L_flatsky(L):
+def sigma_L_flatsky_old(L):
     """This computes the variance of the tau estimator from TT for a single L
     """
 
@@ -141,3 +155,20 @@ def sigma_L_flatsky(L):
     res = 1./sum
 
     return res
+
+
+def plot_model_sigma(mfile='model0.txt',sfile='sigmas_NET30_2.5yr.txt'):
+
+    plt.figure()
+    m0 = np.loadtxt(mfile)
+    s = np.loadtxt(sfile)
+
+    plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1)),'--',lw=3,color='gray',label='Planck TT upper limit')
+    plt.semilogy(m0[0,:], m0[1,:], lw=3,color='red', label='fiducial model')
+    plt.xlim(xmax=2000)
+    plt.legend(loc='lower left',frameon=False,fontsize=20)
+    plt.title(r'$C_\ell^{\tau\tau}$',fontsize=22)
+    plt.savefig('sensitivity_Planck.png')
+
+    
+    
