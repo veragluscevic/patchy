@@ -33,6 +33,8 @@ Noise = 4.*np.pi*fsky * NET**2 / (tobs * 365*24*3600.)
 tt_tilde = tt #* Window**2
 tt_map = tt_tilde + Noise / Window**2
 
+LS = np.array([2,47,101,200,301,400,501,944,1000,1101,1200,1301,1400,1500,1750,2000])
+
 def stirling(num):
     return num*np.log(num) - num
 
@@ -86,11 +88,13 @@ def sigma_L(L):
     """This computes the variance of the tau estimator from TT for a single L
     """
 
+    w3js = np.load('/data/verag/wig3j/J{}_2000.npy'.format(L))
     sum = 0.
-    for l in ls:
-        #print l
-        for lp in ls:
-           sum += w3j_factor(L, l, lp) * powerTT_factor(L, l, lp)
+    for i,l in enumerate(ls):
+        for j,lp in enumerate(ls):
+            w3jfactor = w3js[i,j]**2 * (2.*l + 1.) * (2.*lp + 1.) / (4.*np.pi)
+            #sum += w3j_factor(L, l, lp) * powerTT_factor(L, l, lp)
+            sum += w3jfactor * powerTT_factor(L, l, lp)
     res = 1./sum
 
     return res
@@ -100,12 +104,15 @@ def sigmas(Lmin=2,Lmax=2000,NLs=40,
            flatsky=False):
     """This calls sigma_L for an array of L's
     """
-    Lstep = int((Lmax - Lmin) / float(NLs))
-    Ls = np.arange(Lmin, Lmax, Lstep)
+    #Lstep = int((Lmax - Lmin) / float(NLs))
+    #Ls = np.arange(Lmin, Lmax, Lstep)
     
-    s = np.zeros((2,len(Ls)))
-    s[0] = Ls
-    for i,L in enumerate(Ls):
+    #s = np.zeros((2,len(Ls)))
+    s = np.zeros((2,len(LS)))
+    #s[0] = Ls
+    s[0] = LS
+    #for i,L in enumerate(Ls):
+    for i,L in enumerate(LS):
         print 'for L={}'.format(L)
         if flatsky:
             s[1,i] = sigma_L_flatsky(L)
