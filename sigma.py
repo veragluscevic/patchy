@@ -52,6 +52,26 @@ LS = np.array([2,47,101,200,301,400,501,944,1000,1101,1200,1301,1400,1500,1750,2
 def stirling(num):
     return num*np.log(num) - num
 
+
+def Fks(J):
+    """this uses Kendrick Smith's recursion formula"""
+    if J==0:
+        return 1.
+    res = np.sqrt(1-1./(2*J)) * Fks(J-1)
+    return res
+
+    
+def w3j_000_KS(L, l, lp):
+    """this uses Kendrick Smith's recursion formula"""
+
+    J = L + l + lp    
+    if (J % 2 == 1) or (l + lp < L) or (np.abs(l - lp) > L):
+        return 0.
+
+    res = (-1)**(J/2) * (Fks(J/2 - L) * Fks(J/2 - l) * Fks(J/2 - lp)) / (Fks(J/2) * (J + 1.)**0.5)
+    
+    return res
+
 def w3j_000(L, l, lp):
 
     J = L + l + lp
