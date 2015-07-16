@@ -157,18 +157,31 @@ def sigma_L_flatsky_old(L):
     return res
 
 
-def plot_model_sigma(mfile='model0.txt',sfile='sigmas_NET30_2.5yr.txt'):
+def plot_model_sigma(modelnums=np.array([0,1]),
+                     sfile='sigmas_NET30_2.5yr.txt'):
 
+    
+    
     plt.figure()
-    m0 = np.loadtxt(mfile)
     s = np.loadtxt(sfile)
-
     plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1)),'--',lw=3,color='gray',label='Planck TT upper limit')
-    plt.semilogy(m0[0,:], m0[1,:], lw=3,color='red', label='fiducial model')
+    for mnum in modelnums: 
+        mfile = 'model{}.txt'.format(mnum)
+        m0 = np.loadtxt(mfile)
+        label = ''
+        color = 'blue'
+        if mnum==0:
+            label = 'fiducial model'
+            color = 'red'
+        if mnum==1:
+                label = 'hi model'
+                color = 'Maroon'
+        
+        plt.semilogy(m0[0,:], m0[1,:], lw=2,color=color, label=label)
     plt.xlim(xmax=2000)
     plt.legend(loc='lower left',frameon=False,fontsize=20)
     plt.title(r'$C_\ell^{\tau\tau}$',fontsize=22)
-    plt.savefig('sensitivity_Planck.png')
+    plt.savefig('sensitivity_Planck_all.png')
 
     
     
