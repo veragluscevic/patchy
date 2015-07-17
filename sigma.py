@@ -16,14 +16,14 @@ mpl.rcParams['xtick.major.size']=8
 mpl.rcParams['ytick.major.size']=8
 mpl.rcParams['xtick.labelsize']=18
 mpl.rcParams['ytick.labelsize']=18
-
+import os,os.path,shutil
 
 #from sympy import N
 #from sympy.physics.wigner import wigner_3j
 import pywigxjpf as wig
 
 
-lmax = 2000
+lmax = 5000
 wig.wig_table_init(2*lmax,9)
 wig.wig_temp_init(2*lmax)
 
@@ -53,12 +53,34 @@ def stirling(num):
     return num*np.log(num) - num
 
 
-def Fks(J):
-    """this uses Kendrick Smith's recursion formula"""
-    if J==0:
-        return 1.
-    res = np.sqrt(1-1./(2*J)) * Fks(J-1)
-    return res
+def get_Fks(J, filename='Fks_10000.txt'):
+    Ftable = np.loadtxt(filename)
+    Ftable = np.atleast_1d(Ftable)
+    return Ftable[J]
+
+def tabulate_Fks(Jmax=10000, filename='Fks_10000.txt'):
+    #filename='Fks_{}.txt'.format(Jmax)
+    if(os.path.exists(filename)):
+        fin = open(filename, 'w')
+        fin.close()
+    
+    for J in np.arange(Jmax):
+        print J
+        if J==0:
+            Fres = 1
+        else:
+            Fres = np.sqrt(1-1./(2*J)) * get_Fks(J-1, filename)
+            
+        fout = open(filename, 'a')
+        fout.write('{:.20f}\n'.format(Fres))
+        fout.close()
+
+#def Fks(J):
+#    """this uses Kendrick Smith's recursion formula"""
+#    if J==0:
+#        return 1.
+#    res = np.sqrt(1-1./(2*J)) * Fks(J-1)
+#    return res
 
     
 def w3j_000_KS(L, l, lp):
@@ -68,7 +90,7 @@ def w3j_000_KS(L, l, lp):
     if (J % 2 == 1) or (l + lp < L) or (np.abs(l - lp) > L):
         return 0.
 
-    res = (-1)**(J/2) * (Fks(J/2 - L) * Fks(J/2 - l) * Fks(J/2 - lp)) / (Fks(J/2) * (J + 1.)**0.5)
+    res = (-1)**(J/2) * (get_Fks(J/2 - L) * get_Fks(J/2 - l) * get_Fks(J/2 - lp)) / (get_Fks(J/2) * (J + 1.)**0.5)
     
     return res
 
@@ -118,7 +140,7 @@ def powerTT_factor(L, l, lp, fullsky=True):
     res = num / denom
     return res
 
-def sigma_L(L):
+def sigma_L_old(L):
     """This computes the variance of the tau estimator from TT for a single L
     """
 
@@ -133,7 +155,25 @@ def sigma_L(L):
 
     return res
 
-def sigmas(Lmin=2,Lmax=2000,NLs=40,
+def sigma_L(L):
+    """This computes the variance of the tau estimator from TT for a single L
+    """
+
+    Flist = np.loadtxt('Fks_10000.txt')
+    
+    sum = 0.
+    for i,l in enumerate(ls):
+        for j,lp in enumerate(ls):
+            J = L + l + lp    
+            if not((J % 2 == 1) or (l + lp < L) or (np.abs(l - lp) > L)):
+                w3j = (-1)**(J/2) * (Flist[J/2 - L] * Flist[J/2 - l] * Flist[J/2 - lp]) / (Flist[J/2] * (J + 1.)**0.5)
+                w3jfactor = w3j**2 * (2.*l + 1.) * (2.*lp + 1.) / (4.*np.pi)
+                sum += w3jfactor * powerTT_factor(L, l, lp)
+    res = 1./sum
+
+    return res
+
+def sigmas_old(Lmin=2,Lmax=2000,NLs=40,
            outfile='sigmas_NET30_2.5yr.txt',
            flatsky=False):
     """This calls sigma_L for an array of L's
@@ -156,6 +196,26 @@ def sigmas(Lmin=2,Lmax=2000,NLs=40,
 
     np.savetxt(outfile,s)
     return s
+
+def sigmas(Lmin=2,Lmax=2000,NLs=40,
+           outfile='sigmas_NET30_2.5yr_KS.txt',
+           flatsky=False):
+    """This calls sigma_L for an array of L's
+    """
+    Lstep = int((Lmax - Lmin) / float(NLs))
+    Ls = np.arange(Lmin, Lmax, Lstep)
+    
+    s = np.zeros((2,len(Ls)))
+    s[0] = Ls
+
+    for i,L in enumerate(Ls):
+        print 'for L={}'.format(L)
+        s[1,i] = sigma_L(L)
+        print s[1,i]
+
+    np.savetxt(outfile,s)
+    return s
+
         
 def sigma_L_flatsky_old(L):
     """This computes the variance of the tau estimator from TT for a single L
@@ -178,7 +238,7 @@ def sigma_L_flatsky_old(L):
 
 
 def plot_model_sigma(modelnums=np.array([0,1]),
-                     sfile='sigmas_NET30_2.5yr.txt'):
+                     sfile='sigmas_NET30_2.5yr_KS.txt'):
 
     
     
