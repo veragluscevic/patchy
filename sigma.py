@@ -35,11 +35,12 @@ Tcmb = 2.7255 * 1e6 # CMB temperature in uK
 spectra = np.loadtxt('scalCls.dat')
 ls = spectra[:lmax-1,0]
 tt = spectra[:lmax-1,1] * (2.*np.pi) / ls / (ls + 1) #/ Tcmb
+
 NET = 5 # Planck noise in uK(sec)**0.5 = 30
 tobs = 2. # Planck observation time in years = 2.5yr
 fsky = 0.5 # Planck fsky=0.75
 
-fwhm = 5. #Planck resolution in arcmin
+fwhm = 1.3 #Planck resolution = 5. arcmin
 sigma_b = 0.00741 * fwhm / 60.
 Window = 1./np.exp(ls**2*sigma_b**2/2.)
 
@@ -47,7 +48,7 @@ Noise = 4.*np.pi*fsky * NET**2 / (tobs * 365*24*3600.)
 tt_tilde = tt #* Window**2
 tt_map = tt_tilde + Noise / Window**2
 
-LS = np.array([2,47,101,200,301,400,501,944,1000,1101,1200,1301,1400,1500,1750,2000])
+#LS = np.array([2,47,101,200,301,400,501,944,1000,1101,1200,1301,1400,1500,1750,2000])
 
 def stirling(num):
     return num*np.log(num) - num
@@ -197,11 +198,14 @@ def sigmas_old(Lmin=2,Lmax=2000,NLs=40,
     np.savetxt(outfile,s)
     return s
 
-def sigmas(Lmin=2,Lmax=2000,NLs=40,
-           outfile='sigmas_NET30_2.5yr_KS.txt',
+def sigmas(Lmin=2,Lmax=5000,NLs=40,
+           outfile=None, #'sigmas_NET30_2.5yr_KS.txt',
            flatsky=False):
     """This calls sigma_L for an array of L's
     """
+    if outfile is None:
+        outfile = 'sigmas_NET{:.1f}_{:.1f}yr_{:.1f}arcmin.txt'.format(NET,tobs,fwhm)
+    
     Lstep = int((Lmax - Lmin) / float(NLs))
     Ls = np.arange(Lmin, Lmax, Lstep)
     
@@ -238,13 +242,19 @@ def sigma_L_flatsky_old(L):
 
 
 def plot_model_sigma(modelnums=np.array([0,1]),
-                     sfile='sigmas_NET30_2.5yr_KS.txt'):
+                     sfile1='sigmas_AdvACT_test.txt',#'sigmas_NET30_2.5yr_KS.txt',
+                     sfile2='sigmas_CVlimited.txt',
+                     legend_loc='upper right'):
 
     
     
     plt.figure()
-    s = np.loadtxt(sfile)
-    plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1)),'--',lw=3,color='gray',label='Planck TT upper limit')
+    s = np.loadtxt(sfile1)
+    plt.xlabel(r'$\ell$')
+    plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1))**0.5,'--',lw=3,color='gray',label='projected TT upper limit')
+    s = np.loadtxt(sfile2)
+    plt.xlabel(r'$\ell$')
+    plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1))**0.5,'--',lw=3,color='gray',label='projected TT upper limit')
     for mnum in modelnums: 
         mfile = 'model{}.txt'.format(mnum)
         m0 = np.loadtxt(mfile)
@@ -258,10 +268,10 @@ def plot_model_sigma(modelnums=np.array([0,1]),
                 color = 'Maroon'
         
         plt.semilogy(m0[0,:], m0[1,:], lw=2,color=color, label=label)
-    plt.xlim(xmax=2000)
-    plt.legend(loc='lower left',frameon=False,fontsize=20)
+    plt.xlim(xmax=lmax)
+    plt.legend(loc=legend_loc,frameon=False,fontsize=20)
     plt.title(r'$C_\ell^{\tau\tau}$',fontsize=22)
-    plt.savefig('sensitivity_Planck_all.png')
+    plt.savefig('sensitivity_ACT.png')
 
     
     
