@@ -36,11 +36,11 @@ spectra = np.loadtxt('scalCls.dat')
 ls = spectra[:lmax-1,0]
 tt = spectra[:lmax-1,1] * (2.*np.pi) / ls / (ls + 1) #/ Tcmb
 
-NET = 5 # Planck noise in uK(sec)**0.5 = 30
-tobs = 2. # Planck observation time in years = 2.5yr
-fsky = 0.5 # Planck fsky=0.75
+NET = 30 # Planck noise in uK(sec)**0.5 = 30; AdvACT: 5
+tobs = 2.5 # Planck observation time in years = 2.5yr; AdvACT 2.
+fsky = 0.75 # Planck fsky=0.75; AdvACT 0.5
 
-fwhm = 1.3 #Planck resolution = 5. arcmin
+fwhm = 5. #Planck resolution = 5. arcmin; AdvACT 1.3
 sigma_b = 0.00741 * fwhm / 60.
 Window = 1./np.exp(ls**2*sigma_b**2/2.)
 
@@ -199,7 +199,7 @@ def sigmas_old(Lmin=2,Lmax=2000,NLs=40,
     return s
 
 def sigmas(Lmin=2,Lmax=5000,NLs=40,
-           outfile=None, #'sigmas_NET30_2.5yr_KS.txt',
+           outfile=None, 
            flatsky=False):
     """This calls sigma_L for an array of L's
     """
@@ -242,19 +242,26 @@ def sigma_L_flatsky_old(L):
 
 
 def plot_model_sigma(modelnums=np.array([0,1]),
-                     sfile1='sigmas_NET30_2.5yr_KS.txt',
-                     sfile2='sigmas_NET0.0_2.5yr_1.4arcmin.txt',
+                     sigma_files=['sigmas_NET30.0_2.5yr_5.0arcmin.txt','sigmas_NET5.0_2.0yr_1.3arcmin.txt','sigmas_NET0.0_2.5yr_1.4arcmin.txt'],
                      legend_loc='upper right'):
 
     
     
     plt.figure()
-    s = np.loadtxt(sfile1)
-    plt.xlabel(r'$\ell$')
-    plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1))**0.5,'--',lw=3,color='gray',label='projected TT upper limit')
-    s = np.loadtxt(sfile2)
-    plt.xlabel(r'$\ell$')
-    plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1))**0.5,'--',lw=3,color='gray',label='projected TT upper limit')
+    for sigma_file in sigma_files:
+        s = np.loadtxt(sigma_file)
+        if sigma_file=='sigmas_NET5.0_2.0yr_1.3arcmin.txt':
+            label = 'AdvACT'
+        elif sigma_file=='sigmas_NET0.0_2.5yr_1.4arcmin.txt':
+            label = 'CV limited'
+        elif sigma_file=='sigmas_NET30.0_2.5yr_5.0arcmin.txt':
+            label = 'Planck'
+        else:
+            label=None
+        plt.semilogy(s[0,:], s[1,:]*(2./(2.*s[0,:]+1))**0.5,
+                     '--',lw=3,label=label)
+        
+       
     for mnum in modelnums: 
         mfile = 'model{}.txt'.format(mnum)
         m0 = np.loadtxt(mfile)
@@ -268,10 +275,12 @@ def plot_model_sigma(modelnums=np.array([0,1]),
                 color = 'Maroon'
         
         plt.semilogy(m0[0,:], m0[1,:], lw=2,color=color, label=label)
+
+    plt.xlabel(r'$\ell$')
     plt.xlim(xmax=lmax)
     plt.legend(loc=legend_loc,frameon=False,fontsize=20)
     plt.title(r'$C_\ell^{\tau\tau}$',fontsize=22)
-    plt.savefig('sensitivity_ACT.png')
+    plt.savefig('sensitivity.pdf')
 
     
     
