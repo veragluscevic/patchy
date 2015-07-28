@@ -35,9 +35,9 @@ Tcmb = 2.7255 * 1e6 # CMB temperature in uK
 spectra = np.loadtxt('scalCls.dat')
 ls = spectra[:lmax-1,0]
 tt = spectra[:lmax-1,1] * (2.*np.pi) / ls / (ls + 1) #/ Tcmb
-NET = 30 # Planck noise in uK(sec)**0.5
-tobs = 2.5 # observation time in years
-fsky = 0.75
+NET = 5 # Planck noise in uK(sec)**0.5 = 30
+tobs = 2. # Planck observation time in years = 2.5yr
+fsky = 0.5 # Planck fsky=0.75
 
 fwhm = 5. #Planck resolution in arcmin
 sigma_b = 0.00741 * fwhm / 60.
