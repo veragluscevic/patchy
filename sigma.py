@@ -242,8 +242,8 @@ def sigma_L_flatsky_old(L):
 
 
 def plot_model_sigma(modelnums=np.array([0,1]),
-                     sfile1='sigmas_AdvACT_test.txt',#'sigmas_NET30_2.5yr_KS.txt',
-                     sfile2='sigmas_CVlimited.txt',
+                     sfile1='sigmas_NET30_2.5yr_KS.txt',
+                     sfile2='sigmas_NET0.0_2.5yr_1.4arcmin.txt',
                      legend_loc='upper right'):
 
     
